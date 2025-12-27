@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery MIPYMES Cuba</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Estilos para el modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2c3e50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            display: none;
+            z-index: 1001;
+        }
+
+        .toast.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Estados de secciones */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* Carrito vacío */
+        #empty-cart-message {
+            text-align: center;
+            padding: 40px;
+            color: #95a5a6;
+        }
+
+        /* Formularios */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        /* Botones */
+        .btn-primary {
+            background: #2ecc71;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn-primary:hover {
+            background: #27ae60;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        /* Cart items */
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quantity-btn {
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* Productos */
+        .product-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .product-price {
+            color: #2ecc71;
+            font-weight: bold;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header style="background: #2c3e50; color: white; padding: 15px 0;">
+        <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center;">
+            <h1 style="margin: 0;">Delivery MIPYMES</h1>
+            <nav>
+                <ul style="display: flex; list-style: none; gap: 20px; margin: 0; padding: 0;">
+                    <li><a href="#" onclick="switchSection('catalogo')" style="color: white; text-decoration: none;">Catálogo</a></li>
+                    <li><a href="#" onclick="switchSection('carrito')" style="color: white; text-decoration: none;">Carrito (<span id="cart-count">0</span>)</a></li>
+                    <li><a href="#" onclick="switchSection('checkout')" style="color: white; text-decoration: none;">Checkout</a></li>
+                    <li><a href="#" onclick="switchSection('pagos')" style="color: white; text-decoration: none;">Pagos</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Catálogo -->
+    <section id="catalogo" class="section active" style="padding: 40px 20px;">
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <h2>Nuestros Productos</h2>
+            <div id="productos-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
+                <!-- Productos se cargarán aquí -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Carrito -->
+    <section id="carrito" class="section" style="padding: 40px 20px;">
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <h2>Tu Carrito</h2>
+            <div id="cart-items">
+                <!-- Items del carrito -->
+                <p id="empty-cart-message">Tu carrito está vacío</p>
+            </div>
+            <div id="cart-summary" style="display: none; margin-top: 20px; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span>Subtotal:</span>
+                    <span id="subtotal">0.00 CUP</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span>Delivery:</span>
+                    <span id="delivery-cost">0.00 CUP</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 18px;">
+                    <span>Total:</span>
+                    <span id="total">0.00 CUP</span>
+                </div>
+                <div style="margin-top: 20px;">
+                    <button onclick="proceedToCheckout()" style="width: 100%; padding: 12px; background: #2ecc71; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer;">
+                        Proceder al Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Checkout -->
+    <section id="checkout" class="section" style="padding: 40px 20px;">
+        <div style="max-width: 600px; margin: 0 auto;">
+            <h2>Checkout</h2>
+            <form id="checkout-form" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div style="grid-column: span 2;">
+                        <label for="nombre">Nombre completo *</label>
+                        <input type="text" id="nombre" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    
+                    <div style="grid-column: span 2;">
+                        <label for="telefono">Teléfono *</label>
+                        <input type="tel" id="telefono" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    
+                    <div style="grid-column: span 2;">
+                        <label for="direccion">Dirección completa *</label>
+                        <input type="text" id="direccion" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    
+                    <div style="grid-column: span 2;">
+                        <label for="referencias">Referencias del lugar</label>
+                        <textarea id="referencias" rows="3" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+                    </div>
+                    
+                    <div style="grid-column: span 2;">
+                        <label for="notas">Notas adicionales</label>
+                        <textarea id="notas" rows="3" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="button" onclick="switchSection('carrito')" style="flex: 1; padding: 12px; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Volver al Carrito
+                    </button>
+                    <button type="button" onclick="proceedToPayment()" style="flex: 1; padding: 12px; background: #2ecc71; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Continuar al Pago
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Pagos -->
+    <section id="pagos" class="section" style="padding: 40px 20px;">
+        <div style="max-width: 800px; margin: 0 auto;">
+            <h2>Método de Pago</h2>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button onclick="switchPaymentMethod('qr')" style="flex: 1; padding: 10px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Pago QR
+                </button>
+                <button onclick="switchPaymentMethod('transferencia')" style="flex: 1; padding: 10px; background: #9b59b6; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Transferencia
+                </button>
+                <button onclick="switchPaymentMethod('contraentrega')" style="flex: 1; padding: 10px; background: #e67e22; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Contra Entrega
+                </button>
+            </div>
+            
+            <!-- QR -->
+            <div id="qr-method" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <h3>Pago QR</h3>
+                <p>Escanea el código QR con tu banco para realizar el pago.</p>
+                <button onclick="confirmQRPayment()" style="width: 100%; padding: 12px; background: #2ecc71; color: white; border: none; border-radius: 4px; margin-top: 20px; cursor: pointer;">
+                    Confirmar Pago QR
+                </button>
+            </div>
+            
+            <!-- Transferencia -->
+            <div id="transferencia-method" style="display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <h3>Transferencia Bancaria</h3>
+                <p>Realiza la transferencia y sube el comprobante.</p>
+                <button onclick="confirmTransferPayment()" style="width: 100%; padding: 12px; background: #2ecc71; color: white; border: none; border-radius: 4px; margin-top: 20px; cursor: pointer;">
+                    Confirmar Transferencia
+                </button>
+            </div>
+            
+            <!-- Contra entrega -->
+            <div id="contraentrega-method" style="display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <h3>Contra Entrega</h3>
+                <p>Pagarás en efectivo al recibir tu pedido.</p>
+                <button onclick="confirmCashPayment()" style="width: 100%; padding: 12px; background: #2ecc71; color: white; border: none; border-radius: 4px; margin-top: 20px; cursor: pointer;">
+                    Confirmar Pedido
+                </button>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button onclick="switchSection('checkout')" style="padding: 10px 20px; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Volver al Checkout
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Modal -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Confirmar Pedido</h3>
+                <button onclick="hideModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
+            </div>
+            <div id="modal-body">
+                <!-- Contenido dinámico -->
+            </div>
+            <div class="modal-actions">
+                <button onclick="hideModal()" style="flex: 1; padding: 10px; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                <button onclick="confirmModal()" style="flex: 1; padding: 10px; background: #2ecc71; color: white; border: none; border-radius: 4px; cursor: pointer;">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ DATOS DE CONFIGURACIÓN ============
+        const config = {
+            whatsappNumber: "53512345678",
+            sucursales: [
+                { id: "centro", nombre: "Centro", costo: 20 },
+                { id: "playa", nombre: "Playa", costo: 30 }
+            ],
+            qrOptions: [
+                { id: "banco1", nombre: "Banco Metropolitano" }
+            ],
+            transferencia: {
+                nombreBeneficiario: "Mi PYME Cubana",
+                cuenta: "1234567890"
+            }
+        };
+
+        const productos = [
+            { id: 1, nombre: "Café Cubano", descripcion: "Café espresso tradicional", precio: 20, categoria: "bebidas", activo: true },
+            { id: 2, nombre: "Pan con Lechón", descripcion: "Pan cubano con lechón asado", precio: 120, categoria: "comida", activo: true },
+            { id: 3, nombre: "Tostones", descripcion: "Plátanos verdes fritos", precio: 80, categoria: "comida", activo: true },
+            { id: 4, nombre: "Mojito", descripcion: "Cóctel tradicional cubano", precio: 150, categoria: "bebidas", activo: true },
+            { id: 5, nombre: "Arroz Congrí", descripcion: "Arroz con frijoles negros", precio: 90, categoria: "comida", activo: true },
+            { id: 6, nombre: "Refresco de Mango", descripcion: "Refresco natural de mango", precio: 40, categoria: "bebidas", activo: true },
+            { id: 7, nombre: "Yuca con Mojo", descripcion: "Yuca con salsa de mojo", precio: 70, categoria: "comida", activo: true },
+            { id: 8, nombre: "Flan de Coco", descripcion: "Postre tradicional de coco", precio: 60, categoria: "postres", activo: true }
+        ];
+
+        // ============ ESTADO GLOBAL ============
+        let carrito = JSON.parse(localStorage.getItem('deliveryCart')) || [];
+        let datosCliente = JSON.parse(localStorage.getItem('deliveryCustomer')) || {};
+        let currentPaymentMethod = 'qr';
+        let modalCallback = null;
+
+        // ============ FUNCIONES UTILITARIAS ============
+        function formatCurrency(amount) {
+            return amount.toFixed(2) + ' CUP';
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show';
+            
+            // Color según tipo
+            const colors = {
+                success: '#2ecc71',
+                error: '#e74c3c',
+                warning: '#f39c12',
+                info: '#3498db'
+            };
+            toast.style.backgroundColor = colors[type] || colors.info;
+            
+            setTimeout(() => {
+                toast.className = 'toast';
+            }, 3000);
+        }
+
+        function showModal(title, content, callback) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-body').innerHTML = content;
+            document.getElementById('confirm-modal').classList.add('show');
+            modalCallback = callback;
+        }
+
+        function hideModal() {
+            document.getElementById('confirm-modal').classList.remove('show');
+            modalCallback = null;
+        }
+
+        function confirmModal() {
+            if (modalCallback) {
+                modalCallback();
+            }
+            hideModal();
+        }
+
+        // ============ NAVEGACIÓN ============
+        function switchSection(sectionId) {
+            // Ocultar todas las secciones
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Mostrar la sección seleccionada
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+                
+                // Actualizar contenido según la sección
+                switch(sectionId) {
+                    case 'catalogo':
+                        renderProductos();
+                        break;
+                    case 'carrito':
+                        renderCarrito();
+                        break;
+                    case 'pagos':
+                        renderPagos();
+                        break;
+                }
+            }
+        }
+
+        // ============ PRODUCTOS ============
+        function renderProductos() {
+            const container = document.getElementById('productos-container');
+            if (!container) return;
+            
+            container.innerHTML = productos
+                .filter(p => p.activo)
+                .map(producto => `
+                    <div class="product-card">
+                        <h3>${producto.nombre}</h3>
+                        <p>${producto.descripcion}</p>
+                        <p class="product-price">${formatCurrency(producto.precio)}</p>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button onclick="addToCart(${producto.id})" style="flex: 1; padding: 8px; background: #2ecc71; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                Añadir al carrito
+                            </button>
+                        </div>
+                    </div>
+                `)
+                .join('');
+        }
+
+        // ============ CARRITO ============
+        function addToCart(productId) {
+            const producto = productos.find(p => p.id === productId);
+            if (!producto) return;
+            
+            const itemExistente = carrito.find(item => item.id === productId);
+            
+            if (itemExistente) {
+                itemExistente.cantidad++;
+            } else {
+                carrito.push({
+                    id: producto.id,
+                    nombre: producto.nombre,
+                    precio: producto.precio,
+                    cantidad: 1
+                });
+            }
+            
+            saveCart();
+            updateCartCount();
+            showToast(`${producto.nombre} añadido al carrito`, 'success');
+        }
+
+        function removeFromCart(productId) {
+            carrito = carrito.filter(item => item.id !== productId);
+            saveCart();
+            updateCartCount();
+            renderCarrito();
+            showToast('Producto removido del carrito', 'info');
+        }
+
+        function updateQuantity(productId, change) {
+            const item = carrito.find(item => item.id === productId);
+            if (!item) return;
+            
+            item.cantidad += change;
+            
+            if (item.cantidad <= 0) {
+                removeFromCart(productId);
+            } else {
+                saveCart();
+                updateCartCount();
+                renderCarrito();
+            }
+        }
+
+        function renderCarrito() {
+            const container = document.getElementById('cart-items');
+            const summary = document.getElementById('cart-summary');
+            
+            if (!container) return;
+            
+            if (carrito.length === 0) {
+                container.innerHTML = '<p id="empty-cart-message">Tu carrito está vacío</p>';
+                if (summary) summary.style.display = 'none';
+                return;
+            }
+            
+            container.innerHTML = carrito.map(item => `
+                <div class="cart-item">
+                    <div class="cart-item-info">
+                        <h4 style="margin: 0;">${item.nombre}</h4>
+                        <p style="margin: 5px 0; color: #2ecc71;">${formatCurrency(item.precio)} c/u</p>
+                    </div>
+                    <div class="cart-item-actions">
+                        <button onclick="updateQuantity(${item.id}, -1)" class="quantity-btn">-</button>
+                        <span style="min-width: 30px; text-align: center;">${item.cantidad}</span>
+                        <button onclick="updateQuantity(${item.id}, 1)" class="quantity-btn">+</button>
+                        <button onclick="removeFromCart(${item.id})" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-left: 10px;">
+                            Eliminar
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            if (summary) {
+                summary.style.display = 'block';
+                updateCartSummary();
+            }
+        }
+
+        function updateCartSummary() {
+            const subtotal = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+            const delivery = 20; // Costo fijo por ahora
+            const total = subtotal + delivery;
+            
+            document.getElementById('subtotal').textContent = formatCurrency(subtotal);
+            document.getElementById('delivery-cost').textContent = formatCurrency(delivery);
+            document.getElementById('total').textContent = formatCurrency(total);
+        }
+
+        function updateCartCount() {
+            const countElement = document.getElementById('cart-count');
+            if (countElement) {
+                const totalItems = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+                countElement.textContent = totalItems;
+            }
+        }
+
+        function saveCart() {
+            localStorage.setItem('deliveryCart', JSON.stringify(carrito));
+        }
+
+        // ============ CHECKOUT ============
+        function proceedToCheckout() {
+            if (carrito.length === 0) {
+                showToast('El carrito está vacío', 'error');
+                return;
+            }
+            
+            // Cargar datos guardados del cliente
+            if (datosCliente.nombre) {
+                document.getElementById('nombre').value = datosCliente.nombre || '';
+                document.getElementById('telefono').value = datosCliente.telefono || '';
+                document.getElementById('direccion').value = datosCliente.direccion || '';
+                document.getElementById('referencias').value = datosCliente.referencias || '';
+                document.getElementById('notas').value = datosCliente.notas || '';
+            }
+            
+            switchSection('checkout');
+        }
+
+        function proceedToPayment() {
+            // Validar formulario
+            const nombre = document.getElementById('nombre').value.trim();
+            const telefono = document.getElementById('telefono').value.trim();
+            const direccion = document.getElementById('direccion').value.trim();
+            
+            if (!nombre || !telefono || !direccion) {
+                showToast('Por favor, complete todos los campos requeridos', 'error');
+                return;
+            }
+            
+            // Guardar datos del cliente
+            datosCliente = {
+                nombre,
+                telefono,
+                direccion,
+                referencias: document.getElementById('referencias').value.trim(),
+                notas: document.getElementById('notas').value.trim()
+            };
+            
+            localStorage.setItem('deliveryCustomer', JSON.stringify(datosCliente));
+            switchSection('pagos');
+        }
+
+        // ============ PAGOS ============
+        function switchPaymentMethod(method) {
+            currentPaymentMethod = method;
+            
+            // Ocultar todos
+            document.getElementById('qr-method').style.display = 'none';
+            document.getElementById('transferencia-method').style.display = 'none';
+            document.getElementById('contraentrega-method').style.display = 'none';
+            
+            // Mostrar seleccionado
+            document.getElementById(`${method}-method`).style.display = 'block';
+        }
+
+        function renderPagos() {
+            // Actualizar total en contra entrega
+            const subtotal = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+            const delivery = 20;
+            const total = subtotal + delivery;
+            
+            document.getElementById('cash-total').textContent = formatCurrency(total);
+            
+            // Mostrar método actual
+            switchPaymentMethod(currentPaymentMethod);
+        }
+
+        function confirmQRPayment() {
+            showModal(
+                'Confirmar Pago QR',
+                '<p>¿Confirmas que has realizado el pago mediante código QR?</p><p>Recuerda guardar el comprobante de pago.</p>',
+                () => {
+                    completeOrder('qr');
+                }
+            );
+        }
+
+        function confirmTransferPayment() {
+            showModal(
+                'Confirmar Transferencia',
+                '<p>¿Confirmas que has realizado la transferencia bancaria?</p><p>Asegúrate de subir el comprobante cuando te lo soliciten.</p>',
+                () => {
+                    completeOrder('transferencia');
+                }
+            );
+        }
+
+        function confirmCashPayment() {
+            const subtotal = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+            const delivery = 20;
+            const total = subtotal + delivery;
+            
+            showModal(
+                'Confirmar Pago Contra Entrega',
+                `<p>Pagarás al recibir tu pedido:</p>
+                 <p><strong>Total a pagar: ${formatCurrency(total)}</strong></p>
+                 <p>Ten el monto exacto o cambio disponible.</p>`,
+                () => {
+                    completeOrder('contraentrega');
+                }
+            );
+        }
+
+        function completeOrder(metodoPago) {
+            // Generar mensaje para WhatsApp
+            const itemsTexto = carrito.map(item => 
+                `• ${item.nombre} x${item.cantidad} = ${formatCurrency(item.precio * item.cantidad)}`
+            ).join('\n');
+            
+            const subtotal = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+            const delivery = 20;
+            const total = subtotal + delivery;
+            
+            const mensaje = `*NUEVO PEDIDO - Delivery MIPYMES*
+
+*DETALLES DEL PEDIDO:*
+${itemsTexto}
+
+*TOTALES:*
+Subtotal: ${formatCurrency(subtotal)}
+Delivery: ${formatCurrency(delivery)}
+*TOTAL: ${formatCurrency(total)}*
+
+*DATOS DEL CLIENTE:*
+Nombre: ${datosCliente.nombre}
+Teléfono: ${datosCliente.telefono}
+Dirección: ${datosCliente.direccion}
+Referencias: ${datosCliente.referencias || 'No especificadas'}
+
+*MÉTODO DE PAGO:* ${metodoPago.toUpperCase()}
+*NOTAS:* ${datosCliente.notas || 'Ninguna'}
+
+¡Gracias por tu pedido!`;
+            
+            // Codificar mensaje para URL
+            const mensajeCodificado = encodeURIComponent(mensaje);
+            const whatsappURL = `https://wa.me/${config.whatsappNumber}?text=${mensajeCodificado}`;
+            
+            // Mostrar mensaje final
+            showModal(
+                '¡Pedido Confirmado!',
+                `<p>Tu pedido ha sido registrado exitosamente.</p>
+                 <p>Total: <strong>${formatCurrency(total)}</strong></p>
+                 <p>Se abrirá WhatsApp para que envíes los detalles del pedido.</p>
+                 <p><small>Si WhatsApp no se abre automáticamente, copia el mensaje y envíalo manualmente.</small></p>`,
+                () => {
+                    // Limpiar carrito y volver al inicio
+                    carrito = [];
+                    saveCart();
+                    updateCartCount();
+                    datosCliente = {};
+                    localStorage.removeItem('deliveryCustomer');
+                    
+                    // Abrir WhatsApp
+                    window.open(whatsappURL, '_blank');
+                    
+                    // Volver al catálogo
+                    switchSection('catalogo');
+                    
+                    showToast('¡Pedido completado con éxito!', 'success');
+                }
+            );
+        }
+
+        // ============ INICIALIZACIÓN ============
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar
+            renderProductos();
+            updateCartCount();
+            
+            // Configurar listeners del modal
+            document.getElementById('confirm-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    hideModal();
+                }
+            });
+            
+            // Configurar Escape para cerrar modal
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    hideModal();
+                }
+            });
+            
+            // Mostrar mensaje de bienvenida
+            setTimeout(() => {
+                showToast('Bienvenido a Delivery MIPYMES', 'info');
+            }, 1000);
+        });
+
+        // Hacer funciones globales para los onclick
+        window.switchSection = switchSection;
+        window.addToCart = addToCart;
+        window.updateQuantity = updateQuantity;
+        window.removeFromCart = removeFromCart;
+        window.proceedToCheckout = proceedToCheckout;
+        window.proceedToPayment = proceedToPayment;
+        window.switchPaymentMethod = switchPaymentMethod;
+        window.confirmQRPayment = confirmQRPayment;
+        window.confirmTransferPayment = confirmTransferPayment;
+        window.confirmCashPayment = confirmCashPayment;
+        window.hideModal = hideModal;
+        window.confirmModal = confirmModal;
+    </script>
+</body>
+</html>

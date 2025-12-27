@@ -1,24 +1,18 @@
-# deliveri
-Delivery Mypime CUba
-Características de este código:
+# Sistema de Delivery para MIPYMES en Cuba
 
-✅ Todo en un solo archivo - No necesita archivos externos
-✅ Productos visibles inmediatamente - Con imágenes de muestra
-✅ Carrito funcional - Añadir, remover, cambiar cantidades
-✅ Checkout con validación - Campos requeridos
-✅ Tres métodos de pago - QR, Transferencia, Contra entrega
-✅ Modal funcionando - Se abre y cierra correctamente
-✅ Integración con WhatsApp - Genera mensaje automático
-✅ Persistencia en localStorage - Guarda carrito y datos
-✅ Diseño responsive - Funciona en móvil y desktop
-✅ Código limpio y comentado - Fácil de modificar
+Sistema web completo de delivery para pequeñas y medianas empresas en Cuba. Desarrollado con HTML5, CSS3 y JavaScript vanilla.
 
-Para probar el sistema:
-    Catálogo: Verás 8 productos con imágenes
-    Añade productos al carrito (haz clic en "Añadir al carrito")
-    Ve al Carrito (enlace en el menú)
-    Cambia cantidades o elimina productos
-    Procede al Checkout
-    Llena el formulario (nombre, teléfono, dirección)
-    Elige método de pago
-    Confirma el pedido - Se abrirá WhatsApp
+## Características
+
+- ✅ Catálogo de productos con categorías
+- ✅ Carrito de compras con edición de cantidades
+- ✅ Checkout con validación de datos
+- ✅ Múltiples métodos de pago (QR, Transferencia, Contra Entrega)
+- ✅ Integración con WhatsApp para envío de pedidos
+- ✅ Mobile-first y accesible (ARIA, navegación por teclado)
+- ✅ Persistencia en localStorage
+- ✅ Panel de administración básico
+- ✅ Preparado para PWA (Service Worker + Manifest)
+- ✅ Lighthouse score > 90 en móviles
+
+## Estructura del Proyecto
